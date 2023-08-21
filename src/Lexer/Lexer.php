@@ -31,6 +31,35 @@ class Lexer
     public const TOKEN_PUBLIC = 17;
     public const TOKEN_PROTECTED = 18;
     public const TOKEN_PRIVATE = 19;
+    public const TOKEN_BACKSLASH = 20;
+    public const TOKEN_COMMA = 21;
+    public const TOKEN_BOOL = 22;
+    public const TOKEN_DOT = 23;
+    public const TOKEN_VARIABLE = 24;
+    public const TOKEN_COLON = 25;
+    public const TOKEN_NEW = 26;
+    public const TOKEN_NULL = 27;
+    public const TOKEN_DASH = 28;
+    public const TOKEN_PLUS = 29;
+    public const TOKEN_EQUAL = 30;
+    public const TOKEN_NOT_EQUAL = 31;
+    public const TOKEN_PLUS_EQUAL = 32;
+    public const TOKEN_EQUAL_EQUAL = 33;
+    public const TOKEN_EQUAL_EQUAL_EQUAL = 34;
+    public const TOKEN_NOT_EQUAL_EQUAL = 35;
+    public const TOKEN_DASH_EQUAL = 36;
+    public const TOKEN_DASH_GT = 37;
+    public const TOKEN_DASH_LT = 38;
+    public const TOKEN_DASH_GT_EQUAL = 39;
+    public const TOKEN_DASH_LT_EQUAL = 40;
+    public const TOKEN_DASH_DASH = 41;
+    public const TOKEN_DASH_COLON = 42;
+    public const TOKEN_DOUBLE_AND = 43;
+    public const TOKEN_DOUBLE_OR = 44;
+    public const TOKEN_AND = 45;
+    public const TOKEN_OR = 46;
+    public const TOKEN_DOUBLE_COLON = 47;
+    public const TOKEN_NAMESPACE = 48;
 
     private int $cursor = 0;
     private int $line = 1;
@@ -60,7 +89,7 @@ class Lexer
 
     private static function isAlphaNumeric(string $char): bool
     {
-        return IntlChar::isalnum($char) ?? false;
+        return (IntlChar::isalnum($char) ?? false) || $char === '_';
     }
 
     private static function isStringLiteral(string $char): bool
@@ -114,6 +143,10 @@ class Lexer
         // alpha
         if (self::isAlpha($this->getCurrentChar())) {
             return $this->lexAlpha();
+        }
+
+        if ($this->getCurrentChar() === "$") {
+            return $this->lexVariable();
         }
 
         // number
@@ -213,6 +246,220 @@ class Lexer
             return $token;
         }
 
+        // Backslash
+        if ($this->getCurrentChar() === '\\') {
+            $token = new Token(
+                type: self::TOKEN_BACKSLASH,
+                value: $this->getCurrentChar(),
+                location: new Location($this->line, $this->column, 1),
+            );
+            $this->moveCursor();
+            return $token;
+        }
+
+        // Comma
+        if ($this->getCurrentChar() === ',') {
+            $token = new Token(
+                type: self::TOKEN_COMMA,
+                value: $this->getCurrentChar(),
+                location: new Location($this->line, $this->column, 1),
+            );
+            $this->moveCursor();
+            return $token;
+        }
+
+        // Bool
+        if ($this->getCurrentChar(4) === 'true') {
+            $token = new Token(
+                type: self::TOKEN_BOOL,
+                value: $this->getCurrentChar(4),
+                location: new Location($this->line, $this->column, 4),
+            );
+            $this->moveCursor(4);
+            return $token;
+        }
+
+        // Dot
+        if ($this->getCurrentChar() === '.') {
+            $token = new Token(
+                type: self::TOKEN_DOT,
+                value: $this->getCurrentChar(),
+                location: new Location($this->line, $this->column, 1),
+            );
+            $this->moveCursor();
+            return $token;
+        }
+
+        // Colon
+        if ($this->getCurrentChar() === ':') {
+            $start = $this->cursor;
+            $token = new Token(
+                type: self::TOKEN_COLON,
+                value: $this->getCurrentChar(),
+                location: new Location($this->line, $this->column, 1),
+            );
+            $this->moveCursor();
+            if ($this->getCurrentChar() === ':') {
+                $this->moveCursor();
+                $token = new Token(
+                    type: self::TOKEN_DOUBLE_COLON,
+                    value: substr($this->file->contents, $start, $this->cursor - $start),
+                    location: new Location($this->line, $this->column, 2),
+                );
+            }
+            return $token;
+        }
+
+        // Dash
+        if ($this->getCurrentChar() === '-') { #
+            $start = $this->cursor;
+            $token = new Token(
+                type: self::TOKEN_DASH,
+                value: $this->getCurrentChar(),
+                location: new Location($this->line, $this->column, 1),
+            );
+            $this->moveCursor();
+            if ($this->getCurrentChar() === '=') {
+                $this->moveCursor();
+                $token = new Token(
+                    type: self::TOKEN_DASH_EQUAL,
+                    value: substr($this->file->contents, $start, $this->cursor - $start),
+                    location: new Location($this->line, $this->column, 2),
+                );
+            } else if ($this->getCurrentChar() === '>') {
+                $this->moveCursor();
+                $token = new Token(
+                    type: self::TOKEN_DASH_GT,
+                    value: substr($this->file->contents, $start, $this->cursor - $start),
+                    location: new Location($this->line, $this->column, 2),
+                );
+            } else if ($this->getCurrentChar() === '-') {
+                $this->moveCursor();
+                $token = new Token(
+                    type: self::TOKEN_DASH_DASH,
+                    value: substr($this->file->contents, $start, $this->cursor - $start),
+                    location: new Location($this->line, $this->column, 2),
+                );
+            } else if ($this->getCurrentChar() === '<') {
+                $this->moveCursor();
+                $token = new Token(
+                    type: self::TOKEN_DASH_LT,
+                    value: substr($this->file->contents, $start, $this->cursor - $start),
+                    location: new Location($this->line, $this->column, 2),
+                );
+            } else if ($this->getCurrentChar() === ':') {
+                $this->moveCursor();
+                $token = new Token(
+                    type: self::TOKEN_DASH_COLON,
+                    value: substr($this->file->contents, $start, $this->cursor - $start),
+                    location: new Location($this->line, $this->column, 2),
+                );
+            }
+            return $token;
+        }
+
+        // Double and
+        if ($this->getCurrentChar() === '&') {
+            $token = new Token(
+                type: self::TOKEN_AND,
+                value: $this->getCurrentChar(),
+                location: new Location($this->line, $this->column, 1),
+            );
+            if ($this->getCurrentChar(2) === '&&') {
+                $token = new Token(
+                    type: self::TOKEN_DOUBLE_AND,
+                    value: $this->getCurrentChar(2),
+                    location: new Location($this->line, $this->column, 2),
+                );
+                $this->moveCursor(2);
+            }
+            return $token;
+        }
+
+        // Double or
+        if ($this->getCurrentChar() === '|') {
+            $token = new Token(
+                type: self::TOKEN_OR,
+                value: $this->getCurrentChar(),
+                location: new Location($this->line, $this->column, 1),
+            );
+            if ($this->getCurrentChar(2) === '||') {
+                $token = new Token(
+                    type: self::TOKEN_DOUBLE_OR,
+                    value: $this->getCurrentChar(2),
+                    location: new Location($this->line, $this->column, 2),
+                );
+                $this->moveCursor(2);
+            }
+            return $token;
+        }
+
+        // Plus
+        if ($this->getCurrentChar() === '+') {
+            $token = new Token(
+                type: self::TOKEN_PLUS,
+                value: $this->getCurrentChar(),
+                location: new Location($this->line, $this->column, 1),
+            );
+            $this->moveCursor();
+            if ($this->getCurrentChar() === '=') {
+                $token = new Token(
+                    type: self::TOKEN_PLUS_EQUAL,
+                    value: $this->getCurrentChar(),
+                    location: new Location($this->line, $this->column, 1),
+                );
+                $this->moveCursor();
+            }
+            return $token;
+        }
+
+        // Equal
+        if ($this->getCurrentChar() === '=') {
+            $token = new Token(
+                type: self::TOKEN_EQUAL,
+                value: $this->getCurrentChar(),
+                location: new Location($this->line, $this->column, 1),
+            );
+            $this->moveCursor();
+            if ($this->getCurrentChar() === '=') {
+                $token = new Token(
+                    type: self::TOKEN_EQUAL_EQUAL,
+                    value: $this->getCurrentChar(),
+                    location: new Location($this->line, $this->column, 1),
+                );
+                $this->moveCursor();
+                if ($this->getCurrentChar() === '=') {
+                    $token = new Token(
+                        type: self::TOKEN_EQUAL_EQUAL_EQUAL,
+                        value: $this->getCurrentChar(),
+                        location: new Location($this->line, $this->column, 1),
+                    );
+                    $this->moveCursor();
+                }
+            }
+            return $token;
+        }
+
+        // Not equal
+        if ($this->getCurrentChar() === '!') {
+            $token = new Token(
+                type: self::TOKEN_NOT_EQUAL,
+                value: $this->getCurrentChar(),
+                location: new Location($this->line, $this->column, 1),
+            );
+            $this->moveCursor();
+
+            if ($this->getCurrentChar() === '=') {
+                $token = new Token(
+                    type: self::TOKEN_NOT_EQUAL_EQUAL,
+                    value: $this->getCurrentChar(),
+                    location: new Location($this->line, $this->column, 1),
+                );
+                $this->moveCursor();
+            }
+            return $token;
+        }
+
         // PHP open
         if ($this->getCurrentChar(5) === '<?php') {
             $token = new Token(
@@ -239,6 +486,16 @@ class Lexer
     private function lexAlpha(): Token
     {
         $start = $this->cursor;
+
+        // Namespace
+        if ($this->getCurrentChar(9) === 'namespace') {
+            $this->moveCursor(9);
+            return new Token(
+                type: self::TOKEN_NAMESPACE,
+                value: 'namespace',
+                location: new Location($this->line, $this->column, 9),
+            );
+        }
 
         // Check if class keyword
         if ($this->getCurrentChar(5) === 'class') {
@@ -300,11 +557,47 @@ class Lexer
             );
         }
 
+        // Check if new
+        if ($this->getCurrentChar(3) === 'new') {
+            $this->moveCursor(3);
+            return new Token(
+                type: self::TOKEN_NEW,
+                value: 'new',
+                location: new Location($this->line, $this->column, 3),
+            );
+        }
+
+        // Check if null
+        if (strtolower($this->getCurrentChar(4)) === 'null') {
+            $this->moveCursor(4);
+            return new Token(
+                type: self::TOKEN_NULL,
+                value: 'null',
+                location: new Location($this->line, $this->column, 4),
+            );
+        }
+
+        while (!self::isEmpty($this->getCurrentChar()) && self::isAlphaNumeric($this->getCurrentChar())) {
+            $this->moveCursor();
+        }
+
+        return new Token(
+            type: self::TOKEN_STRING,
+            value: substr($this->file->contents, $start, $this->cursor - $start),
+            location: new Location($this->line, $this->column, $this->cursor - $start),
+        );
+    }
+
+    private function lexVariable(): Token
+    {
+        $start = $this->cursor;
+        $this->moveCursor();
+
         while (!self::isEmpty($this->getCurrentChar()) && self::isAlphaNumeric($this->getCurrentChar())) {
             $this->moveCursor();
         }
         return new Token(
-            type: self::TOKEN_STRING,
+            type: self::TOKEN_VARIABLE,
             value: substr($this->file->contents, $start, $this->cursor - $start),
             location: new Location($this->line, $this->column, $this->cursor - $start),
         );
