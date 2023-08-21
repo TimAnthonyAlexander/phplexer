@@ -23,6 +23,14 @@ class Lexer
     public const TOKEN_CPAREN = 9;
     public const TOKEN_PHP_OPEN = 10;
     public const TOKEN_SEMICOLON = 11;
+    public const TOKEN_FUNCTION = 12;
+    public const TOKEN_CLASS = 13;
+    public const TOKEN_EXTENDS = 14;
+    public const TOKEN_IMPLEMENTS = 15;
+    public const TOKEN_RETURN = 16;
+    public const TOKEN_PUBLIC = 17;
+    public const TOKEN_PROTECTED = 18;
+    public const TOKEN_PRIVATE = 19;
 
     private int $cursor = 0;
     private int $line = 1;
@@ -105,15 +113,7 @@ class Lexer
 
         // alpha
         if (self::isAlpha($this->getCurrentChar())) {
-            $start = $this->cursor;
-            while (!self::isEmpty($this->getCurrentChar()) && self::isAlphaNumeric($this->getCurrentChar())) {
-                $this->moveCursor();
-            }
-            return new Token(
-                type: self::TOKEN_STRING,
-                value: substr($this->file->contents, $start, $this->cursor - $start),
-                location: new Location($this->line, $this->column, $this->cursor - $start),
-            );
+            return $this->lexAlpha();
         }
 
         // number
@@ -234,6 +234,80 @@ class Lexer
         }
 
         throw new \RuntimeException('Unexpected token "' . $this->getCurrentChar() . '" at ' . $this->line . ':' . $this->column . ' (' . $this->cursor . ')');
+    }
+
+    private function lexAlpha(): Token
+    {
+        $start = $this->cursor;
+
+        // Check if class keyword
+        if ($this->getCurrentChar(5) === 'class') {
+            $this->moveCursor(5);
+            return new Token(
+                type: self::TOKEN_CLASS,
+                value: 'class',
+                location: new Location($this->line, $this->column, 5),
+            );
+        }
+
+        // Check if extends keyword
+        if ($this->getCurrentChar(7) === 'extends') {
+            $this->moveCursor(7);
+            return new Token(
+                type: self::TOKEN_EXTENDS,
+                value: 'extends',
+                location: new Location($this->line, $this->column, 7),
+            );
+        }
+
+        // Check if implements keyword
+        if ($this->getCurrentChar(10) === 'implements') {
+            $this->moveCursor(10);
+            return new Token(
+                type: self::TOKEN_IMPLEMENTS,
+                value: 'implements',
+                location: new Location($this->line, $this->column, 10),
+            );
+        }
+
+        // Check if public keyword
+        if ($this->getCurrentChar(6) === 'public') {
+            $this->moveCursor(6);
+            return new Token(
+                type: self::TOKEN_PUBLIC,
+                value: 'public',
+                location: new Location($this->line, $this->column, 6),
+            );
+        }
+
+        // Check if protected keyword
+        if ($this->getCurrentChar(9) === 'protected') {
+            $this->moveCursor(9);
+            return new Token(
+                type: self::TOKEN_PROTECTED,
+                value: 'protected',
+                location: new Location($this->line, $this->column, 9),
+            );
+        }
+
+        // Check if private keyword
+        if ($this->getCurrentChar(7) === 'private') {
+            $this->moveCursor(7);
+            return new Token(
+                type: self::TOKEN_PRIVATE,
+                value: 'private',
+                location: new Location($this->line, $this->column, 7),
+            );
+        }
+
+        while (!self::isEmpty($this->getCurrentChar()) && self::isAlphaNumeric($this->getCurrentChar())) {
+            $this->moveCursor();
+        }
+        return new Token(
+            type: self::TOKEN_STRING,
+            value: substr($this->file->contents, $start, $this->cursor - $start),
+            location: new Location($this->line, $this->column, $this->cursor - $start),
+        );
     }
 
     private function lex(): array
