@@ -49,7 +49,6 @@ class Lexer
     public const TOKEN_NOT_EQUAL_EQUAL = 35;
     public const TOKEN_DASH_EQUAL = 36;
     public const TOKEN_DASH_GT = 37;
-    public const TOKEN_DASH_LT = 38;
     public const TOKEN_DASH_GT_EQUAL = 39;
     public const TOKEN_DASH_LT_EQUAL = 40;
     public const TOKEN_DASH_DASH = 41;
@@ -381,13 +380,6 @@ class Lexer
                 $this->moveCursor();
                 $token = new Token(
                     type: self::TOKEN_DASH_DASH,
-                    value: substr($this->file->contents, $start, $this->cursor - $start),
-                    location: new Location($this->line, $this->column, 2),
-                );
-            } else if ($this->getCurrentChar() === '<') {
-                $this->moveCursor();
-                $token = new Token(
-                    type: self::TOKEN_DASH_LT,
                     value: substr($this->file->contents, $start, $this->cursor - $start),
                     location: new Location($this->line, $this->column, 2),
                 );

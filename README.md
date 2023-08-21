@@ -49,7 +49,7 @@ Phplexer supports a wide range of PHP tokens, including:
 - Various operators like `=`, `==`, `!=`, `+=`, etc.
 - Delimiters like curly braces, parentheses, brackets
 
-For a full list of supported tokens, refer to the `Lexer` class inside the project.
+For a full list of supported tokens, refer to the [Tokens](Tokens.md) file.
 
 ## 🤝 Contributing
 
@@ -58,4 +58,4 @@ If you find any bugs or have suggestions, please open an issue. 💡
 
 ## 📜 License
 
-Phplexer is released under the MIT License. See the LICENSE file for more details. 🏛️
+Phplexer is released under the MIT License. See the [LICENSE](LICENSE) file for more details. 🏛️
