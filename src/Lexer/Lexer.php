@@ -21,6 +21,8 @@ class Lexer
     public const TOKEN_CCURLY = 7;
     public const TOKEN_OPAREN = 8;
     public const TOKEN_CPAREN = 9;
+    public const TOKEN_PHP_OPEN = 10;
+    public const TOKEN_SEMICOLON = 11;
 
     private int $cursor = 0;
     private int $line = 1;
@@ -35,22 +37,22 @@ class Lexer
 
     private static function isEmpty(string $char): bool
     {
-        return IntlChar::isspace($char);
+        return IntlChar::isspace($char) ?? false;
     }
 
     private static function isDigit(string $char): bool
     {
-        return IntlChar::isdigit($char);
+        return IntlChar::isdigit($char) ?? false;
     }
 
     private static function isAlpha(string $char): bool
     {
-        return IntlChar::isalpha($char);
+        return IntlChar::isalpha($char) ?? false;
     }
 
     private static function isAlphaNumeric(string $char): bool
     {
-        return IntlChar::isalnum($char);
+        return IntlChar::isalnum($char) ?? false;
     }
 
     private static function isStringLiteral(string $char): bool
@@ -78,27 +80,36 @@ class Lexer
         return $string;
     }
 
-    private function nextToken(): Token
+    private function moveCursor(int $n = 1): void
     {
-        while (self::isEmpty($this->getCurrentChar())) {
+        foreach (range(0, $n - 1) as $i) {
+            if (!isset($this->file->contents[$this->cursor + $i])) {
+                return;
+            }
+
             $this->cursor++;
             $this->column++;
 
-            if ($this->getCurrentChar(2) === "\n") {
-                $this->cursor++;
+            if ($this->getCurrentChar(1) === "\n") {
                 $this->line++;
                 $this->column = 1;
             }
+        }
+    }
+
+    private function nextToken(): Token
+    {
+        while (self::isEmpty($this->getCurrentChar())) {
+            $this->moveCursor();
         }
 
         // alpha
         if (self::isAlpha($this->getCurrentChar())) {
             $start = $this->cursor;
             while (!self::isEmpty($this->getCurrentChar()) && self::isAlphaNumeric($this->getCurrentChar())) {
-                $this->cursor++;
-                $this->column++;
+                $this->moveCursor();
             }
-            $token = new Token(
+            return new Token(
                 type: self::TOKEN_STRING,
                 value: substr($this->file->contents, $start, $this->cursor - $start),
                 location: new Location($this->line, $this->column, $this->cursor - $start),
@@ -109,10 +120,9 @@ class Lexer
         if (self::isDigit($this->getCurrentChar())) {
             $start = $this->cursor;
             while (!self::isEmpty($this->getCurrentChar()) && self::isDigit($this->getCurrentChar())) {
-                $this->cursor++;
-                $this->column++;
+                $this->moveCursor();
             }
-            $token = new Token(
+            return new Token(
                 type: self::TOKEN_NUMBER,
                 value: substr($this->file->contents, $start, $this->cursor - $start),
                 location: new Location($this->line, $this->column, $this->cursor - $start),
@@ -120,20 +130,17 @@ class Lexer
         }
 
         // string literal
-        if ($this->getCurrentChar() === '"') {
+        if (self::isStringLiteral($this->getCurrentChar())) {
             $start = $this->cursor;
-            $this->cursor++;
-            $this->column++;
+            $this->moveCursor();
 
-            while ($this->getCurrentChar() !== '"') {
-                $this->cursor++;
-                $this->column++;
+            while (!self::isStringLiteral($this->getCurrentChar())) {
+                $this->moveCursor();
             }
 
-            $this->cursor++;
-            $this->column++;
+            $this->moveCursor();
 
-            $token = new Token(
+            return new Token(
                 type: self::TOKEN_STRING_LITERAL,
                 value: substr($this->file->contents, $start, $this->cursor - $start),
                 location: new Location($this->line, $this->column, $this->cursor - $start),
@@ -143,11 +150,10 @@ class Lexer
         // comment
         if (self::isComment($this->getCurrentChar())) {
             $start = $this->cursor;
-            while ($this->getCurrentChar(2) !== "\n") {
-                $this->cursor++;
-                $this->column++;
+            while ($this->getCurrentChar(1) !== "\n") {
+                $this->moveCursor();
             }
-            $token = new Token(
+            return new Token(
                 type: self::TOKEN_COMMENT,
                 value: substr($this->file->contents, $start, $this->cursor - $start),
                 location: new Location($this->line, $this->column, $this->cursor - $start),
@@ -156,60 +162,78 @@ class Lexer
 
         // Curly braces
         if ($this->getCurrentChar() === '{') {
-            $this->cursor++;
-            $this->column++;
             $token = new Token(
                 type: self::TOKEN_OCURLY,
                 value: $this->getCurrentChar(),
                 location: new Location($this->line, $this->column, 1),
             );
+            $this->moveCursor();
+            return $token;
         }
 
         if ($this->getCurrentChar() === '}') {
-            $this->cursor++;
-            $this->column++;
             $token = new Token(
                 type: self::TOKEN_CCURLY,
                 value: $this->getCurrentChar(),
                 location: new Location($this->line, $this->column, 1),
             );
+            $this->moveCursor();
+            return $token;
         }
 
         // Parentheses
         if ($this->getCurrentChar() === '(') {
-            $this->cursor++;
-            $this->column++;
             $token = new Token(
                 type: self::TOKEN_OPAREN,
                 value: $this->getCurrentChar(),
                 location: new Location($this->line, $this->column, 1),
             );
+            $this->moveCursor();
+            return $token;
         }
 
         if ($this->getCurrentChar() === ')') {
-            $this->cursor++;
-            $this->column++;
             $token = new Token(
                 type: self::TOKEN_CPAREN,
                 value: $this->getCurrentChar(),
                 location: new Location($this->line, $this->column, 1),
             );
+            $this->moveCursor();
+            return $token;
+        }
+
+        // Semi-colon
+        if ($this->getCurrentChar() === ';') {
+            $token = new Token(
+                type: self::TOKEN_SEMICOLON,
+                value: $this->getCurrentChar(),
+                location: new Location($this->line, $this->column, 1),
+            );
+            $this->moveCursor();
+            return $token;
+        }
+
+        // PHP open
+        if ($this->getCurrentChar(5) === '<?php') {
+            $token = new Token(
+                type: self::TOKEN_PHP_OPEN,
+                value: $this->getCurrentChar(5),
+                location: new Location($this->line, $this->column, 5),
+            );
+            $this->moveCursor(5);
+            return $token;
         }
 
         // EOF
         if ($this->getCurrentChar() === '') {
-            $token = new Token(
+            return new Token(
                 type: self::TOKEN_EOF,
                 value: '',
                 location: new Location($this->line, $this->column, 1),
             );
         }
 
-        if (!isset($token)) {
-            throw new \RuntimeException('Unexpected token');
-        }
-
-        return $token;
+        throw new \RuntimeException('Unexpected token "' . $this->getCurrentChar() . '" at ' . $this->line . ':' . $this->column . ' (' . $this->cursor . ')');
     }
 
     private function lex(): array
@@ -223,6 +247,6 @@ class Lexer
             }
         }
 
-        return [];
+        return $tokens;
     }
 }

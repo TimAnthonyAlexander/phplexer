@@ -3,7 +3,7 @@
 
 declare(strict_types=1);
 
-namespace public;
+namespace phplexer;
 
 use TimAlexander\Phplexer\File\File;
 use TimAlexander\Phplexer\Lexer\Lexer;
@@ -21,4 +21,6 @@ $file = new File($arg1);
 
 $lexer = new Lexer($file);
 
-var_dump($lexer->token());
+foreach ($lexer->tokens as $token) {
+    echo $token->type . ': "' . $token->value . '"' . "\n";
+}
