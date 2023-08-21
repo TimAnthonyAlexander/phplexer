@@ -60,6 +60,10 @@ class Lexer
     public const TOKEN_OR = 46;
     public const TOKEN_DOUBLE_COLON = 47;
     public const TOKEN_NAMESPACE = 48;
+    public const TOKEN_OBRACKET = 49;
+    public const TOKEN_CBRACKET = 50;
+    public const TOKEN_QUESTION_MARK = 51;
+    public const TOKEN_NULL_COALESCE = 52;
 
     private int $cursor = 0;
     private int $line = 1;
@@ -84,7 +88,7 @@ class Lexer
 
     private static function isAlpha(string $char): bool
     {
-        return IntlChar::isalpha($char) ?? false;
+        return (IntlChar::isalpha($char) ?? false) || $char === '_';
     }
 
     private static function isAlphaNumeric(string $char): bool
@@ -94,7 +98,7 @@ class Lexer
 
     private static function isStringLiteral(string $char): bool
     {
-        return $char === '"';
+        return $char === '"' || $char === "'";
     }
 
     private static function isComment(string $char): bool
@@ -211,6 +215,46 @@ class Lexer
                 location: new Location($this->line, $this->column, 1),
             );
             $this->moveCursor();
+            return $token;
+        }
+
+        // Square brackets
+        if ($this->getCurrentChar() === '[') {
+            $token = new Token(
+                type: self::TOKEN_OBRACKET,
+                value: $this->getCurrentChar(),
+                location: new Location($this->line, $this->column, 1),
+            );
+            $this->moveCursor();
+            return $token;
+        }
+        if ($this->getCurrentChar() === ']') {
+            $token = new Token(
+                type: self::TOKEN_CBRACKET,
+                value: $this->getCurrentChar(),
+                location: new Location($this->line, $this->column, 1),
+            );
+            $this->moveCursor();
+            return $token;
+        }
+
+        // Question mark
+        if ($this->getCurrentChar() === '?') {
+            $start = $this->cursor;
+            $token = new Token(
+                type: self::TOKEN_QUESTION_MARK,
+                value: $this->getCurrentChar(),
+                location: new Location($this->line, $this->column, 1),
+            );
+            $this->moveCursor();
+            if ($this->getCurrentChar() === '?') {
+                $this->moveCursor();
+                $token = new Token(
+                    type: self::TOKEN_NULL_COALESCE,
+                    value: substr($this->file->contents, $start, $this->cursor - $start),
+                    location: new Location($this->line, $this->column, $this->cursor - $start),
+                );
+            }
             return $token;
         }
 
