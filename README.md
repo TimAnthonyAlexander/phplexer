@@ -1,24 +1,24 @@
-# Phplexer: A PHP Lexer
+# 🧩 Phplexer: A PHP Lexer
 
 Phplexer is a comprehensive PHP lexer designed to tokenize various PHP constructs. With support for numerous tokens, it allows detailed analysis of PHP files. Perfect for parsing PHP code in your custom applications.
 
-## Table of Contents
+## 📑 Table of Contents
 
-1. [Features](#features)
-2. [Installation](#installation)
-3. [Usage](#usage)
-4. [Tokens Supported](#tokens-supported)
-5. [Contributing](#contributing)
-6. [License](#license)
+1. [🌟 Features](#features)
+2. [🛠️ Installation](#installation)
+3. [▶️ Usage](#usage)
+4. [🎫 Tokens Supported](#tokens-supported)
+5. [🤝 Contributing](#contributing)
+6. [📜 License](#license)
 
-## Features
+## 🌟 Features
 
 - Lexical analysis of PHP files
 - Support for multiple PHP tokens including operators, delimiters, and keywords
 - Easy integration with existing projects
 - Detailed token information for comprehensive code analysis
 
-## Installation
+## 🛠️ Installation
 
 You can install Phplexer by cloning the repository:
 
@@ -28,9 +28,9 @@ cd Phplexer
 composer install
 ```
 
-Make sure to have Composer installed to manage dependencies.
+Make sure to have Composer installed to manage dependencies. 🎵
 
-## Usage
+## ▶️ Usage
 
 Once installed, you can use Phplexer by running the following command:
 
@@ -40,7 +40,7 @@ Once installed, you can use Phplexer by running the following command:
 
 Replace `<PHPFILE>` with the path to the PHP file you want to analyze.
 
-## Tokens Supported
+## 🎫 Tokens Supported
 
 Phplexer supports a wide range of PHP tokens, including:
 
@@ -51,10 +51,11 @@ Phplexer supports a wide range of PHP tokens, including:
 
 For a full list of supported tokens, refer to the `Lexer` class inside the project.
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Feel free to fork the project, create a feature branch, and open a pull request. If you find any bugs or have suggestions, please open an issue.
+Contributions are welcome! Feel free to fork the project, create a feature branch, and open a pull request.
+If you find any bugs or have suggestions, please open an issue. 💡
 
-## License
+## 📜 License
 
-Phplexer is released under the MIT License. See the LICENSE file for more details.
+Phplexer is released under the MIT License. See the LICENSE file for more details. 🏛️
